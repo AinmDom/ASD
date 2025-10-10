@@ -1,0 +1,68 @@
+# 忽略Python编译产生的文件
+__pycache__/
+*.py[cod]
+*$py.class
+
+# 忽略数据文件
+data/
+*.csv
+*.xlsx
+*.json
+*.pkl
+
+# 忽略环境相关文件
+.env
+.venv
+venv/
+ENV/
+
+# 忽略日志文件
+*.log
+logs/
+
+# 忽略缓存文件
+.cache/
+*.pth
+
+# 忽略IDE配置文件
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# 忽略操作系统文件
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+
+# 忽略临时文件
+*.tmp
+*.temp
+*.swp
+*.swo
+
+# 忽略模型文件
+models/saved_models/
+*.pt
+*.pth
+
+# 忽略输出文件夹
+output/
+results/
+
+# 忽略Docker相关文件
+Dockerfile
+.dockerignore
+
+# 忽略其他可能的敏感文件
+secrets.txt
+credentials.json
+*.key
+
+# 忽略大文件
+*.zip
+*.tar.gz
+*.7z

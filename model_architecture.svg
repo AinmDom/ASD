@@ -1,0 +1,101 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="800" viewBox="0 0 900 800">
+  <!-- 背景 -->
+  <rect width="900" height="800" fill="#f8f9fa"/>
+  
+  <!-- 标题 -->
+  <text x="450" y="40" font-family="Arial" font-size="24" font-weight="bold" text-anchor="middle" fill="#333">两阶段训练音频异常检测模型框架</text>
+  
+  <!-- 数据输入 -->
+  <rect x="340" y="80" width="220" height="60" rx="10" fill="#e9ecef" stroke="#495057" stroke-width="2"/>
+  <text x="450" y="115" font-family="Arial" font-size="16" text-anchor="middle" fill="#333">音频输入 (128 Log-Mel特征)</text>
+  
+  <!-- 第一阶段 -->
+  <text x="220" y="180" font-family="Arial" font-size="18" font-weight="bold" text-anchor="middle" fill="#007bff">第一阶段</text>
+  <text x="220" y="200" font-family="Arial" font-size="14" text-anchor="middle" fill="#495057">冻结ATST-Frame，仅训练CRNN</text>
+  
+  <!-- 第二阶段 -->
+  <text x="680" y="180" font-family="Arial" font-size="18" font-weight="bold" text-anchor="middle" fill="#28a745">第二阶段</text>
+  <text x="680" y="200" font-family="Arial" font-size="14" text-anchor="middle" fill="#495057">微调所有参数</text>
+  
+  <!-- 阶段分隔线 -->
+  <line x1="450" y1="220" x2="450" y2="520" stroke="#dee2e6" stroke-width="3" stroke-dasharray="5,5"/>
+  
+  <!-- 第一阶段 - ATST-Frame (冻结) -->
+  <rect x="100" y="240" width="240" height="60" rx="10" fill="#e9ecef" stroke="#adb5bd" stroke-width="2" stroke-dasharray="5,5"/>
+  <text x="220" y="265" font-family="Arial" font-size="16" text-anchor="middle" fill="#6c757d">ATST-Frame (冻结)</text>
+  <text x="220" y="285" font-family="Arial" font-size="12" text-anchor="middle" fill="#6c757d">[多头自注意力机制]</text>
+  
+  <!-- 第一阶段 - CNN特征提取器 -->
+  <rect x="100" y="320" width="240" height="80" rx="10" fill="#cce7ff" stroke="#007bff" stroke-width="2"/>
+  <text x="220" y="355" font-family="Arial" font-size="16" text-anchor="middle" fill="#007bff">CNN特征提取器</text>
+  <text x="220" y="375" font-family="Arial" font-size="12" text-anchor="middle" fill="#007bff">3个卷积块 + 批归一化 + ReLU</text>
+  
+  <!-- 第一阶段 - RNN网络 -->
+  <rect x="100" y="420" width="240" height="80" rx="10" fill="#d1ecf1" stroke="#17a2b8" stroke-width="2"/>
+  <text x="220" y="455" font-family="Arial" font-size="16" text-anchor="middle" fill="#17a2b8">RNN网络</text>
+  <text x="220" y="475" font-family="Arial" font-size="12" text-anchor="middle" fill="#17a2b8">LSTM编码器 + LSTM解码器</text>
+  
+  <!-- 第二阶段 - ATST-Frame (解冻) -->
+  <rect x="560" y="240" width="240" height="60" rx="10" fill="#d4edda" stroke="#28a745" stroke-width="2"/>
+  <text x="680" y="265" font-family="Arial" font-size="16" text-anchor="middle" fill="#28a745">ATST-Frame (解冻)</text>
+  <text x="680" y="285" font-family="Arial" font-size="12" text-anchor="middle" fill="#28a745">[多头自注意力机制]</text>
+  
+  <!-- 第二阶段 - CNN特征提取器 -->
+  <rect x="560" y="320" width="240" height="60" rx="10" fill="#d4edda" stroke="#28a745" stroke-width="2"/>
+  <text x="680" y="355" font-family="Arial" font-size="16" text-anchor="middle" fill="#28a745">CNN特征提取器</text>
+  
+  <!-- 第二阶段 - RNN网络 -->
+  <rect x="560" y="390" width="240" height="60" rx="10" fill="#d4edda" stroke="#28a745" stroke-width="2"/>
+  <text x="680" y="425" font-family="Arial" font-size="16" text-anchor="middle" fill="#28a745">RNN网络</text>
+  
+  <!-- 第二阶段 - Mean Teacher -->
+  <rect x="560" y="460" width="240" height="60" rx="10" fill="#fff3cd" stroke="#ffc107" stroke-width="2"/>
+  <text x="680" y="495" font-family="Arial" font-size="16" text-anchor="middle" fill="#856404">Mean Teacher + 插值一致性训练</text>
+  
+  <!-- 输出层 -->
+  <rect x="350" y="600" width="200" height="60" rx="10" fill="#f8d7da" stroke="#dc3545" stroke-width="2"/>
+  <text x="450" y="635" font-family="Arial" font-size="16" text-anchor="middle" fill="#dc3545">二分类输出 (异常/正常)</text>
+  
+  <!-- 箭头 -->
+  <!-- 输入到第一阶段 -->
+  <line x1="450" y1="140" x2="220" y2="240" stroke="#495057" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- 第一阶段内部连接 -->
+  <line x1="220" y1="300" x2="220" y2="320" stroke="#007bff" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="220" y1="400" x2="220" y2="420" stroke="#17a2b8" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- 第一阶段到输出 -->
+  <line x1="220" y1="500" x2="450" y2="600" stroke="#495057" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- 输入到第二阶段 -->
+  <line x1="450" y1="140" x2="680" y2="240" stroke="#495057" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- 第二阶段内部连接 -->
+  <line x1="680" y1="300" x2="680" y2="320" stroke="#28a745" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="680" y1="380" x2="680" y2="390" stroke="#28a745" stroke-width="2" marker-end="url(#arrowhead)"/>
+  <line x1="680" y1="450" x2="680" y2="460" stroke="#ffc107" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- 第二阶段到输出 -->
+  <line x1="680" y1="520" x2="450" y2="600" stroke="#495057" stroke-width="2" marker-end="url(#arrowhead)"/>
+  
+  <!-- 箭头定义 -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#495057"/>
+    </marker>
+  </defs>
+  
+  <!-- 图例 -->
+  <rect x="90" y="720" width="20" height="15" rx="3" fill="#e9ecef" stroke="#adb5bd" stroke-width="2" stroke-dasharray="5,5"/>
+  <text x="120" y="732" font-family="Arial" font-size="12" fill="#6c757d">冻结层</text>
+  
+  <rect x="260" y="720" width="20" height="15" rx="3" fill="#cce7ff" stroke="#007bff" stroke-width="2"/>
+  <text x="290" y="732" font-family="Arial" font-size="12" fill="#007bff">第一阶段训练层</text>
+  
+  <rect x="460" y="720" width="20" height="15" rx="3" fill="#d4edda" stroke="#28a745" stroke-width="2"/>
+  <text x="490" y="732" font-family="Arial" font-size="12" fill="#28a745">第二阶段训练层</text>
+  
+  <rect x="660" y="720" width="20" height="15" rx="3" fill="#fff3cd" stroke="#ffc107" stroke-width="2"/>
+  <text x="690" y="732" font-family="Arial" font-size="12" fill="#856404">特殊训练策略</text>
+</svg>

@@ -1,0 +1,52 @@
+# 数据配置
+data:
+  dataset_path: './data/BCNDataset'
+  sample_rate: 44100
+  n_mels: 128
+  hop_length: 704  # 16ms hop length (44100 * 0.016 = 705.6, rounded to 704)
+  n_fft: 5632  # 128ms window (44100 * 0.128 = 5644.8, rounded to 5632)
+  duration: 5.0  # 每个音频片段的时长（秒）
+  batch_size_strong: 4  # 强标记数据的batch size
+  batch_size_weak: 8    # 弱标记数据的batch size
+  batch_size_unlabeled: 8  # 未标记数据的batch size
+  train_split: 0.8
+  num_workers: 4
+  frame_duration: 0.128  # 帧时长（秒）
+  frame_hop: 0.016  # 帧跳步（秒）
+
+# 模型配置
+model:
+  input_dim: 128  # 与n_mels对应
+  hidden_dim: 256
+  num_layers: 2
+  dropout: 0.3
+  bidirectional: true
+  use_attention: true
+
+# 训练配置
+training:
+  # 第一阶段训练参数
+  stage1_epochs: 30
+  stage1_lr_cnn: 0.001
+  stage1_lr_rnn: 0.001
+  
+  # 第二阶段训练参数
+  stage2_epochs: 20
+  stage2_lr_cnn: 0.0002
+  stage2_lr_rnn: 0.002
+  
+  weight_decay: 0.0001
+  patience: 10
+  threshold: 0.5  # 异常检测阈值
+  device: 'cuda' if torch.cuda.is_available() else 'cpu'
+  
+  # 数据增强参数
+  augmentation_prob: 0.5  # 不进行增强的概率
+  mixup_prob: 0.25  # mix-up增强的概率
+  freq_warp_prob: 0.25  # 频率扭曲增强的概率
+
+# 输出配置
+output:
+  model_save_path: './models/best_model.pth'
+  log_dir: './logs'
+  plot_dir: './plots'
