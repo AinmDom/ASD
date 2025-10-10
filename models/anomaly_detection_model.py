@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 
 class ATSTFrame(nn.Module):
-    """ATST-Frame 模块，用于音频帧级别的特征提取"""
+    """ATST-Frame 模块 用于音频帧级别的特征提取"""
     def __init__(self, input_dim=128, hidden_dim=256, num_heads=4):
         super(ATSTFrame, self).__init__()
         self.input_dim = input_dim
