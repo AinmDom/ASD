@@ -38,7 +38,7 @@ training:
   weight_decay: 0.0001
   patience: 10
   threshold: 0.5  # 异常检测阈值
-  device: 'cuda' if torch.cuda.is_available() else 'cpu'
+  device: 'auto'  # 将在代码中解析为'cuda'或'cpu'
   
   # 数据增强参数
   augmentation_prob: 0.5  # 不进行增强的概率
