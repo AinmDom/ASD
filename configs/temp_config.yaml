@@ -1,15 +1,14 @@
 # 数据配置
 data:
-  dataset_path: './data/BCNDataset'
+  dataset_path: './data/synthetic_data'
   sample_rate: 44100
   n_mels: 128
   hop_length: 704  # 16ms hop length (44100 * 0.016 = 705.6, rounded to 704)
   n_fft: 5632  # 128ms window (44100 * 0.128 = 5644.8, rounded to 5632)
   duration: 5.0  # 每个音频片段的时长（秒）
-  batch_size: 8  # 默认batch size
-  batch_size_strong: 8  # 强标记数据的batch size
-  batch_size_weak: 12    # 弱标记数据的batch size
-  batch_size_unlabeled: 12  # 未标记数据的batch size
+  batch_size_strong: 4  # 强标记数据的batch size
+  batch_size_weak: 8    # 弱标记数据的batch size
+  batch_size_unlabeled: 8  # 未标记数据的batch size
   train_split: 0.8
   num_workers: 4
   frame_duration: 0.128  # 帧时长（秒）
@@ -19,35 +18,27 @@ data:
 model:
   input_dim: 128  # 与n_mels对应
   hidden_dim: 256
-  output_dim: 1    # 二分类输出维度
   num_layers: 2
   dropout: 0.3
-  dropout_rate: 0.3  # 与dropout相同的值
   bidirectional: true
   use_attention: true
 
 # 训练配置
 training:
-  # 设备配置
-  device: 'auto'  # 将在代码中解析为'cuda'或'cpu'
-  threshold: 0.5  # 异常检测阈值
-  
   # 第一阶段训练参数
-  stage1:
-    epochs: 30
-    lr_cnn: 0.0015
-    lr_rnn: 0.0015
-    patience: 10
-    
+  stage1_epochs: 30
+  stage1_lr_cnn: 0.001
+  stage1_lr_rnn: 0.001
+  
   # 第二阶段训练参数
-  stage2:
-    epochs: 20
-    lr_cnn: 0.0003
-    lr_rnn: 0.003
-    patience: 10
-    
-  # 通用训练参数
+  stage2_epochs: 20
+  stage2_lr_cnn: 0.0002
+  stage2_lr_rnn: 0.002
+  
   weight_decay: 0.0001
+  patience: 10
+  threshold: 0.5  # 异常检测阈值
+  device: 'auto'  # 将在代码中解析为'cuda'或'cpu'
   
   # 数据增强参数
   augmentation_prob: 0.5  # 不进行增强的概率

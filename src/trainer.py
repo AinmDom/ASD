@@ -1,30 +1,219 @@
 import os
+# 先导入numpy，确保它是第一个被导入的科学计算库
 import numpy as np
+# 检查numpy版本
+print(f"Using NumPy version: {np.__version__}")
+
+# 导入torch相关库
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import yaml  # 添加缺失的yaml导入
+
+# 解决matplotlib和pandas版本不兼容问题
+import matplotlib
+import types
+# 检查并添加缺失的函数
+if not hasattr(matplotlib.cbook, '_is_pandas_dataframe'):
+    def _is_pandas_dataframe(obj):
+        """检查对象是否为pandas DataFrame"""
+        try:
+            import pandas as pd
+            return isinstance(obj, pd.DataFrame)
+        except ImportError:
+            return False
+    
+    # 将函数添加到matplotlib.cbook模块
+    matplotlib.cbook._is_pandas_dataframe = _is_pandas_dataframe
+
+# 解决numpy和sklearn版本不兼容问题
+try:
+    from numpy.core.numeric import ComplexWarning
+except ImportError:
+    # 如果导入失败，手动定义这个异常类
+    class ComplexWarning(UserWarning):
+        """当将复数转换为实数时发出警告"""
+        pass
+    # 将异常类添加到numpy.core.numeric模块
+    import numpy.core.numeric
+    numpy.core.numeric.ComplexWarning = ComplexWarning
+
+# 现在导入torch数据加载器
 from torch.utils.data import DataLoader, ConcatDataset
 import matplotlib.pyplot as plt
 import seaborn as sns
-from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score, confusion_matrix, roc_curve, roc_auc_score
-from tqdm import tqdm
 
-from models.anomaly_detection_model import AudioAnomalyDetector
-from utils.data_processor import create_data_loaders
+# 手动实现所有必要的评估指标函数，避免导入sklearn
+def accuracy_score(y_true, y_pred):
+    """计算准确率"""
+    correct = np.sum(np.array(y_true) == np.array(y_pred))
+    return correct / len(y_true)
+
+def precision_score(y_true, y_pred, average='binary'):
+    """计算精确率"""
+    y_true = np.array(y_true)
+    y_pred = np.array(y_pred)
+    tp = np.sum((y_true == 1) & (y_pred == 1))
+    fp = np.sum((y_true == 0) & (y_pred == 1))
+    return tp / (tp + fp) if (tp + fp) > 0 else 0.0
+
+def recall_score(y_true, y_pred, average='binary'):
+    """计算召回率"""
+    y_true = np.array(y_true)
+    y_pred = np.array(y_pred)
+    tp = np.sum((y_true == 1) & (y_pred == 1))
+    fn = np.sum((y_true == 1) & (y_pred == 0))
+    return tp / (tp + fn) if (tp + fn) > 0 else 0.0
+
+def f1_score(y_true, y_pred, average='binary'):
+    """计算F1分数"""
+    precision = precision_score(y_true, y_pred, average)
+    recall = recall_score(y_true, y_pred, average)
+    return 2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
+
+def confusion_matrix(y_true, y_pred):
+    """计算混淆矩阵"""
+    y_true = np.array(y_true)
+    y_pred = np.array(y_pred)
+    # 只考虑二分类情况
+    tp = np.sum((y_true == 1) & (y_pred == 1))
+    fp = np.sum((y_true == 0) & (y_pred == 1))
+    fn = np.sum((y_true == 1) & (y_pred == 0))
+    tn = np.sum((y_true == 0) & (y_pred == 0))
+    return np.array([[tn, fp], [fn, tp]])
+
+def roc_curve(y_true, y_pred):
+    """简化版ROC曲线计算"""
+    # 这个是简化版本，实际应用中可能需要更精确的实现
+    thresholds = np.sort(np.unique(y_pred))[::-1]
+    fpr_list = [0.0]
+    tpr_list = [0.0]
+    
+    for threshold in thresholds:
+        y_pred_binary = (np.array(y_pred) >= threshold).astype(int)
+        cm = confusion_matrix(y_true, y_pred_binary)
+        tn, fp, fn, tp = cm.ravel()
+        fpr = fp / (fp + tn) if (fp + tn) > 0 else 0.0
+        tpr = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+        fpr_list.append(fpr)
+        tpr_list.append(tpr)
+    
+    return np.array(fpr_list), np.array(tpr_list), thresholds
+
+def roc_auc_score(y_true, y_pred):
+    """简化版ROC AUC计算"""
+    # 这个是简化版本，实际应用中可能需要更精确的实现
+    try:
+        from scipy import integrate
+        fpr, tpr, _ = roc_curve(y_true, y_pred)
+        return integrate.trapz(tpr, fpr)
+    except ImportError:
+        # 如果scipy也无法导入，使用简化的AUC计算
+        print("Warning: scipy not available, using simplified AUC calculation")
+        # 排序预测值和真实标签
+        y_true = np.array(y_true)
+        y_pred = np.array(y_pred)
+        sorted_indices = np.argsort(y_pred)
+        y_true_sorted = y_true[sorted_indices]
+        y_pred_sorted = y_pred[sorted_indices]
+        
+        # 计算真阳性和假阳性
+        tp = np.sum(y_true)
+        fp = len(y_true) - tp
+        
+        # 简化的AUC计算
+        auc = 0.0
+        last_tp = 0
+        last_fp = 0
+        for i in range(len(y_true_sorted)):
+            if i > 0 and y_pred_sorted[i] != y_pred_sorted[i-1]:
+                # 当阈值变化时计算矩形面积
+                auc += (last_tp * (last_fp - fp))
+            if y_true_sorted[i] == 1:
+                last_tp = tp
+                tp -= 1
+            else:
+                last_fp = fp
+                fp -= 1
+        auc += (last_tp * last_fp)
+        
+        # 归一化
+        if last_tp * last_fp > 0:
+            auc = auc / (last_tp * last_fp)
+        
+        return auc
+
+# 导入tqdm用于进度显示
+try:
+    from tqdm import tqdm
+except ImportError:
+    # 如果tqdm也无法导入，创建一个简单的替代实现
+    print("Warning: tqdm not available, using simple progress display")
+    class tqdm:
+        def __init__(self, iterable=None, desc=None, total=None):
+            self.iterable = iterable
+            self.desc = desc or "Processing"
+            self.total = total or (len(iterable) if iterable is not None else 0)
+            self.current = 0
+            
+        def __iter__(self):
+            if self.iterable is not None:
+                for item in self.iterable:
+                    yield item
+                    self.update(1)
+        
+        def update(self, n=1):
+            self.current += n
+            if self.total > 0:
+                percent = (self.current / self.total) * 100
+                print(f"\r{self.desc}: {self.current}/{self.total} ({percent:.1f}%)", end="")
+        
+        def set_postfix(self, **kwargs):
+            pass
+        
+        def __enter__(self):
+            return self
+        
+        def __exit__(self, exc_type, exc_val, exc_tb):
+            print()  # 换行
+
+# 导入自定义模型和数据处理器
+try:
+    from models.anomaly_detection_model import AudioAnomalyDetector
+    from utils.data_processor import create_data_loaders
+except ImportError as e:
+    print(f"Warning: Error importing custom modules: {e}")
+    print("This may cause issues later in the code execution")
 
 class ModelTrainer:
     def __init__(self, config_path):
         # 加载配置文件
-        with open(config_path, 'r') as f:
+        with open(config_path, 'r', encoding='utf-8') as f:
             self.config = yaml.safe_load(f)
         
         # 设置设备
-        self.device = torch.device(
-            'cuda' if torch.cuda.is_available() and self.config['training']['device'] == 'cuda' else 'cpu'
-        )
+        try:
+            # 尝试检查CUDA可用性并获取GPU名称
+            if torch.cuda.is_available() and self.config['training']['device'] == 'cuda':
+                gpu_name = torch.cuda.get_device_name(0)
+                print(f"检测到GPU: {gpu_name}")
+                # 检查是否有兼容性警告，但仍然尝试使用GPU
+                self.device = torch.device('cuda')
+            else:
+                self.device = torch.device('cpu')
+        except Exception as e:
+            # 如果CUDA相关操作失败，退回到CPU
+            print(f"CUDA初始化失败: {e}，将使用CPU进行训练")
+            self.device = torch.device('cpu')
+        
+        # 打印最终选择的设备
+        print(f"使用设备: {self.device}")
         
         # 初始化模型
         self.model = AudioAnomalyDetector(self.config).to(self.device)
+        
+        # 初始化优化器
+        self.optimizer = self.model.get_optimizer(stage=1)
         
         # 创建保存模型的目录
         self.model_dir = self.config['output']['model_save_path']
@@ -371,6 +560,7 @@ class ModelTrainer:
         # 保存模型
         torch.save({
             'model_state_dict': self.model.state_dict(),
+            'optimizer_state_dict': self.optimizer.state_dict(),
             'config': self.config,
             'best_val_loss': self.best_val_loss
         }, file_path)
@@ -387,8 +577,16 @@ class ModelTrainer:
         
         checkpoint = torch.load(model_path, map_location=self.device)
         self.model.load_state_dict(checkpoint['model_state_dict'])
-        self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-        self.best_val_loss = checkpoint['best_val_loss']
+        
+        # 尝试加载优化器状态字典，如果不存在则忽略
+        if 'optimizer_state_dict' in checkpoint:
+            self.optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        else:
+            print("Warning: Optimizer state dict not found in model file, using default optimizer settings")
+        
+        # 尝试加载最佳验证损失，如果不存在则保持当前值
+        if 'best_val_loss' in checkpoint:
+            self.best_val_loss = checkpoint['best_val_loss']
         
         print(f"Model loaded from {model_path}")
     

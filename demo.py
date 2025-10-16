@@ -136,7 +136,7 @@ def demo_pipeline():
     
     # 2. 修改配置文件以使用生成的数据
     config_path = './configs/config.yaml'
-    with open(config_path, 'r') as f:
+    with open(config_path, 'r', encoding='utf-8') as f:
         config_content = f.read()
     
     # 更新配置文件中的数据集路径
@@ -144,7 +144,7 @@ def demo_pipeline():
     
     # 保存临时配置文件
     temp_config_path = './configs/temp_config.yaml'
-    with open(temp_config_path, 'w') as f:
+    with open(temp_config_path, 'w', encoding='utf-8') as f:
         f.write(updated_config)
     
     print(f"配置文件已更新，使用临时配置: {temp_config_path}")

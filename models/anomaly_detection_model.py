@@ -58,7 +58,7 @@ class CNNFeatureExtractor(nn.Module):
         
         # 卷积层提取特征
         self.conv1 = nn.Sequential(
-            nn.Conv2d(input_dim, cnn_channels, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
+            nn.Conv2d(1, cnn_channels, kernel_size=(3, 3), stride=(1, 1), padding=(1, 1)),
             nn.BatchNorm2d(cnn_channels),
             nn.ReLU(),
             nn.MaxPool2d(kernel_size=(2, 2), stride=(2, 2))
@@ -100,7 +100,7 @@ class AudioAnomalyDetector(nn.Module):
         self.num_mels = config['data']['n_mels']
         
         # ATST-Frame 模块
-        self.atst_frame = ATSTFrame(input_dim=self.num_mels, hidden_dim=self.hidden_dim)
+        self.atst_frame = ATSTFrame(input_dim=self.hidden_dim, hidden_dim=self.hidden_dim)
         
         # CNN特征提取器
         self.cnn = CNNFeatureExtractor(
@@ -200,6 +200,7 @@ class AudioAnomalyDetector(nn.Module):
         
         # 输出预测（二分类）
         output = self.fc_output(self.dropout(decoder_out))
+        output = torch.squeeze(output, dim=-1)  # 移除最后一个维度，匹配标签形状
         output = self.sigmoid(output)  # 应用sigmoid激活函数
         
         return output

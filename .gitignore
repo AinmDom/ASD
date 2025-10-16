@@ -8,7 +8,11 @@ data/
 *.csv
 *.xlsx
 *.json
-*.pkl
+*.pkl、
+
+temp/
+*.txt
+*.wav
 
 # 忽略环境相关文件
 .env

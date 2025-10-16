@@ -246,7 +246,8 @@ def create_data_loaders(config, stage=1):
             batch_size=batch_size_strong,
             shuffle=True,
             num_workers=config['data']['num_workers'],
-            pin_memory=True
+            pin_memory=True,
+            collate_fn=custom_collate_fn
         )
         
     except Exception as e:
@@ -276,7 +277,8 @@ def create_data_loaders(config, stage=1):
             batch_size=batch_size_weak,
             shuffle=True,
             num_workers=config['data']['num_workers'],
-            pin_memory=True
+            pin_memory=True,
+            collate_fn=custom_collate_fn
         )
         
     except Exception as e:
@@ -306,7 +308,8 @@ def create_data_loaders(config, stage=1):
             batch_size=batch_size_unlabeled,
             shuffle=True,
             num_workers=config['data']['num_workers'],
-            pin_memory=True
+            pin_memory=True,
+            collate_fn=custom_collate_fn
         )
         
     except Exception as e:
@@ -333,7 +336,8 @@ def create_data_loaders(config, stage=1):
             batch_size=batch_size_strong,  # 验证时使用强标记数据的批大小
             shuffle=False,
             num_workers=config['data']['num_workers'],
-            pin_memory=True
+            pin_memory=True,
+            collate_fn=custom_collate_fn
         )
         
     except Exception as e:
@@ -341,3 +345,53 @@ def create_data_loaders(config, stage=1):
         val_loader = None
     
     return loaders, val_loader
+
+
+def custom_collate_fn(batch):
+    """自定义的collate函数，处理可变长度的帧序列"""
+    # 简单版本：对于每个样本，确保它们有相同的形状
+    if isinstance(batch[0], tuple):
+        # 有标签的情况
+        inputs, labels = zip(*batch)
+        
+        # 为每个输入找到最大的帧数
+        max_frames = max(input.shape[0] for input in inputs)
+        
+        # 填充所有输入到最大帧数
+        padded_inputs = []
+        for input in inputs:
+            # 创建一个具有最大帧数的零张量
+            padded = torch.zeros((max_frames,) + input.shape[1:], dtype=input.dtype, device=input.device)
+            # 复制原始数据到前N帧
+            padded[:input.shape[0]] = input
+            padded_inputs.append(padded)
+        
+        # 堆叠输入
+        padded_inputs = torch.stack(padded_inputs)
+        
+        # 处理标签
+        if labels[0].dim() > 0:  # 帧级标签
+            max_label_len = max(label.shape[0] for label in labels)
+            padded_labels = []
+            for label in labels:
+                padded_label = torch.zeros(max_label_len, dtype=label.dtype, device=label.device)
+                padded_label[:label.shape[0]] = label
+                padded_labels.append(padded_label)
+            padded_labels = torch.stack(padded_labels)
+        else:  # 样本级标签
+            padded_labels = torch.stack(labels)
+        
+        return padded_inputs, padded_labels
+    else:
+        # 无标签的情况
+        # 找到最大帧数
+        max_frames = max(input.shape[0] for input in batch)
+        
+        # 填充所有输入
+        padded_inputs = []
+        for input in batch:
+            padded = torch.zeros((max_frames,) + input.shape[1:], dtype=input.dtype, device=input.device)
+            padded[:input.shape[0]] = input
+            padded_inputs.append(padded)
+        
+        return torch.stack(padded_inputs)
